@@ -163,8 +163,12 @@ type InstallApplicationOptions struct {
 	PurchaseMethod *int64 `plist:"PurchaseMethod,omitempty" json:"purchase_method,omitempty"`
 }
 
-type InstallApplicationConfiguration struct{}
-type InstallApplicationAttributes struct{}
+type InstallApplicationConfiguration struct{
+
+}
+type InstallApplicationAttributes struct{
+	Removable *bool `plist:"Removable,omitempty" json:"removable,omitempty"`
+}
 
 type AccountConfiguration struct {
 	SkipPrimarySetupAccountCreation     bool           `plist:",omitempty" json:"skip_primary_setup_account_creation,omitempty"`
