@@ -232,7 +232,7 @@ type Setting struct {
 	HostName                *string                `plist:",omitempty" json:"hostname,omitempty"`
 	Identifier              *string                `plist:",omitempty" json:"identifier"`
 	TimeZone                *string                `plist:",omitempty" json:"time_zone,omitempty"`
-	Attributes              map[string]string      `plist:",omitempty" json:"attributes,omitempty"`
+	Attributes map[string]interface{} `plist:",omitempty" json:"attributes,omitempty"`
 	Image                   []byte                 `plist:",omitempty" json:"image,omitempty"`
 	Where                   *int                   `plist:",omitempty" json:"where,omitempty"`
 	MDMOptions              map[string]interface{} `plist:",omitempty" json:"mdm_options,omitempty"`
