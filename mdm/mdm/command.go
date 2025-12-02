@@ -232,7 +232,7 @@ type Setting struct {
 	HostName                *string                `plist:",omitempty" json:"hostname,omitempty"`
 	Identifier              *string                `plist:",omitempty" json:"identifier"`
 	TimeZone                *string                `plist:",omitempty" json:"time_zone,omitempty"`
-	Attributes              *InstallApplicationAttributes    `plist:",omitempty" json:"attributes,omitempty"`
+	Attributes              *SettingAttributes    `plist:",omitempty" json:"attributes,omitempty"`
 	Image                   []byte                 `plist:",omitempty" json:"image,omitempty"`
 	Where                   *int                   `plist:",omitempty" json:"where,omitempty"`
 	MDMOptions              map[string]interface{} `plist:",omitempty" json:"mdm_options,omitempty"`
@@ -243,6 +243,9 @@ type Setting struct {
 	ConfigurationData       []byte                 `plist:"-" json:"configuration"` // used to build the dictionary
 }
 
+type SettingAttributes struct{
+	Removable *bool `plist:"Removable,omitempty" json:"removable,omitempty"`
+}
 type LOMDeviceRequest struct {
 	RequestList []LOMDeviceRequestCommand `plist:",omitempty" json:"request_list,omitempty"`
 }
