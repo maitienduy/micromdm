@@ -418,11 +418,13 @@ func protoToSetting(s *mdmproto.Setting) Setting {
 	case "ApplicationAttributes":
 		pbs := s.GetApplicationAttributes()
 		attr := pbs.GetApplicationAttributes()
-		vpnUUID := attr.GetVpnUuid()
-		if vpnUUID != "" {
-			setting.Attributes = map[string]string{"VPNUUID": vpnUUID}
-		}
 		setting.Identifier = nilIfEmptyString(pbs.GetIdentifier())
+		if attr != nil {
+			removable := attr.GetRemovable()
+			setting.Attributes = &SettingAttributes{
+				Removable: &removable,
+			}
+		}
 	case "DeviceName":
 		pbs := s.GetDeviceName()
 		setting.DeviceName = nilIfEmptyString(pbs.GetDeviceName())

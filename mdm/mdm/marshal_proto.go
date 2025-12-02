@@ -464,9 +464,12 @@ func settingToProto(s Setting) *mdmproto.Setting {
 			Enabled: falseIfNil(s.Enabled),
 		}
 	case "ApplicationAttributes":
-		var attributes *mdmproto.ApplicationAttributes
-		if v, ok := s.Attributes["VPNUUID"]; ok {
-			attributes.VpnUuid = v
+		attributes := &mdmproto.ApplicationAttributes{}
+		// if v, ok := s.Attributes["VPNUUID"]; ok {
+		// 	attributes.VpnUuid = v
+		// }
+		if s.Attributes != nil && s.Attributes.Removable != nil {
+			attributes.Removable = *s.Attributes.Removable
 		}
 		pbs.ApplicationAttributes = &mdmproto.ApplicationAttributesSetting{
 			Identifier:            emptyStringIfNil(s.Identifier),

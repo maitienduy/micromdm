@@ -328,6 +328,7 @@ message ApplicationConfigurationSetting {
 
 message ApplicationAttributes {
   string vpn_uuid = 1;
+  bool removable = 2;
 }
 
 message DeviceNameSetting {
