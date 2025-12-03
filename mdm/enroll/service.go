@@ -360,20 +360,20 @@ func (svc *service) makeHakinetSupervisionProfile() (*cfgprofiles.Profile, error
 	}
 
 	// 3. Restrictions payload (application access)
-	appAccess := &ApplicationAccessPayload{
-		Payload:                                 cfgprofiles.NewPayload("com.apple.applicationaccess", "com.hakinet.restrictions"),
-		AllowVPNCreation:                        false,
-		ForceWiFiPowerOn:                        true,
-		ForceAutomaticDateAndTime:               true,
-		AllowEraseContentAndSettings:            false,
-		AllowConfigurationProfileInstallation:   false,
-		ForceAssistantProfanityFilter:           true,
-		AllowMDMEnrollment:                      false,
-		AllowEnterpriseAppTrust:                 false,
-		AllowUIConfigurationProfileInstallation: false,
-	}
-	appAccess.PayloadDisplayName = "Hakinet Restrictions"
-	profile.AddPayload(appAccess)
+	// appAccess := &ApplicationAccessPayload{
+	// 	Payload:                                 cfgprofiles.NewPayload("com.apple.applicationaccess", "com.hakinet.restrictions"),
+	// 	AllowVPNCreation:                        false,
+	// 	ForceWiFiPowerOn:                        true,
+	// 	ForceAutomaticDateAndTime:               true,
+	// 	AllowEraseContentAndSettings:            false,
+	// 	AllowConfigurationProfileInstallation:   false,
+	// 	ForceAssistantProfanityFilter:           true,
+	// 	AllowMDMEnrollment:                      false,
+	// 	AllowEnterpriseAppTrust:                 false,
+	// 	AllowUIConfigurationProfileInstallation: false,
+	// }
+	// appAccess.PayloadDisplayName = "Hakinet Restrictions"
+	// profile.AddPayload(appAccess)
 
 	// 4. Web content filter payload
 	// webFilter := &WebContentFilterPayload{
