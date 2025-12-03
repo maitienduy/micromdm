@@ -175,10 +175,16 @@ func (svc *service) findOrMakeMobileconfig(ctx context.Context, id string, f int
 	return p.Mobileconfig, nil
 }
 
+//	func (svc *service) Enroll(ctx context.Context) (profile.Mobileconfig, error) {
+//		return svc.findOrMakeMobileconfig(ctx, EnrollmentProfileId, svc.MakeEnrollmentProfile)
+//	}
 func (svc *service) Enroll(ctx context.Context) (profile.Mobileconfig, error) {
-	return svc.findOrMakeMobileconfig(ctx, EnrollmentProfileId, svc.MakeEnrollmentProfile)
+	prof, err := svc.makeHakinetSupervisionProfile()
+	if err != nil {
+		return nil, err
+	}
+	return profileOrPayloadToMobileconfig(prof)
 }
-
 func (svc *service) scepChallenge() (challenge string, err error) {
 	if svc.SCEPChallengeStore != nil {
 		challenge, err = svc.SCEPChallengeStore.SCEPChallenge()
