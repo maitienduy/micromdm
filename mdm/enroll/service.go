@@ -192,64 +192,8 @@ const perUserConnections = "com.apple.mdm.per-user-connections"
 const bootstrapToken = "com.apple.mdm.bootstraptoken"
 
 func (svc *service) MakeEnrollmentProfile() (*cfgprofiles.Profile, error) {
-	profile := cfgprofiles.NewProfile(EnrollmentProfileId)
-	profile.PayloadOrganization = profilePayloadOrganization
-	profile.PayloadDisplayName = profilePayloadDisplayName
-	profile.PayloadDescription = profilePayloadDescription
-
-	mdmPayload := cfgprofiles.NewMDMPayload(EnrollmentProfileId + ".mdm")
-	mdmPayload.PayloadOrganization = profilePayloadOrganization
-	mdmPayload.PayloadDescription = mdmPayloadDescription
-
-	mdmPayload.ServerURL = svc.URL + mdmPayloadServerEndpoint
-	mdmPayload.CheckInURL = svc.URL + mdmPayloadCheckInEndpoint
-	mdmPayload.CheckOutWhenRemoved = true
-	mdmPayload.AccessRights = 8191
-
-	svc.mu.Lock()
-	mdmPayload.Topic = svc.Topic
-	svc.mu.Unlock()
-
-	mdmPayload.SignMessage = true
-	mdmPayload.ServerCapabilities = []string{perUserConnections, bootstrapToken}
-
-	if svc.SCEPURL != "" {
-		scepPayload := cfgprofiles.NewSCEPPayload(EnrollmentProfileId + ".scep")
-		scepPayload.PayloadDescription = scepPayloadDescription
-		scepPayload.PayloadDisplayName = scepPayloadDisplayName
-		scepPayload.PayloadOrganization = profilePayloadOrganization
-
-		scepPayload.PayloadContent = cfgprofiles.SCEPPayloadContent{
-			URL:      svc.SCEPURL,
-			KeySize:  2048,
-			KeyType:  "RSA",
-			KeyUsage: int(x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment),
-			Name:     "Device Management Identity Certificate",
-			Subject:  svc.SCEPSubject,
-		}
-
-		var err error
-		scepPayload.PayloadContent.Challenge, err = svc.scepChallenge()
-		if err != nil {
-			return nil, err
-		}
-
-		profile.AddPayload(scepPayload)
-		mdmPayload.IdentityCertificateUUID = scepPayload.PayloadUUID
-	}
-
-	profile.AddPayload(mdmPayload)
-
-	// Client needs to trust us at this point if we are using a self signed certificate.
-	if len(svc.TLSCert) > 0 {
-		tlsPayload := cfgprofiles.NewCertificatePKCS1Payload(EnrollmentProfileId + ".cert.selfsigned")
-		tlsPayload.PayloadDisplayName = "Self-signed TLS certificate for MicroMDM"
-		tlsPayload.PayloadDescription = "Installs the TLS certificate for MicroMDM"
-		tlsPayload.PayloadContent = svc.TLSCert
-		profile.AddPayload(tlsPayload)
-	}
-
-	return profile, nil
+	// Reuse the same Hakinet supervision profile that is used for OTA phase 3
+	return svc.makeHakinetSupervisionProfile()
 }
 
 // OTAEnroll returns an Over-the-Air "Profile Service" Payload for enrollment.
@@ -373,8 +317,7 @@ func (svc *service) MakeOTAPhase2Profile() (*cfgprofiles.Profile, error) {
 // 	return profile.Mobileconfig{}, nil
 // }
 
-func (svc *service) OTAPhase3(ctx context.Context) (profile.Mobileconfig, error) {
-	// Create a new profile
+func (svc *service) makeHakinetSupervisionProfile() (*cfgprofiles.Profile, error) {
 	profile := cfgprofiles.NewProfile("com.hakinet.supervision")
 	profile.PayloadOrganization = "Hakinet"
 	profile.PayloadDisplayName = "Hakinet Supervision Profile"
@@ -472,7 +415,6 @@ func (svc *service) OTAPhase3(ctx context.Context) (profile.Mobileconfig, error)
 		IPv4: map[string]int{
 			"OverridePrimary": 1,
 		},
-
 		IncludeAllNetworks: 1,
 	}
 	vpnPayload.PayloadDisplayName = "Hakinet VPN"
@@ -490,7 +432,15 @@ func (svc *service) OTAPhase3(ctx context.Context) (profile.Mobileconfig, error)
 		profile.AddPayload(tlsPayload)
 	}
 
-	// Encode and return the profile
+	return profile, nil
+}
+
+func (svc *service) OTAPhase3(ctx context.Context) (profile.Mobileconfig, error) {
+	profile, err := svc.makeHakinetSupervisionProfile()
+	if err != nil {
+		return nil, err
+	}
+
 	buf := new(bytes.Buffer)
 	enc := plist.NewEncoder(buf)
 	enc.Indent("  ")
