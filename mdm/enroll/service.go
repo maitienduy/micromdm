@@ -24,12 +24,12 @@ const (
 	OTAProfileId        string = "com.github.micromdm.micromdm.ota"
 
 	profilePayloadOrganization = "Hakinet"
-	profilePayloadDisplayName  = "Hakinet Enrollment Profile"
-	profilePayloadDescription  = "The server may alter your settings"
+	// profilePayloadDisplayName  = "Hakinet Enrollment Profile"
+	profilePayloadDescription = "This profile will help children use devices safely and appropriately."
 
-	mdmPayloadDescription     = "Enrolls with the Hakinet MDM server"
-	mdmPayloadServerEndpoint  = "/mdm/connect"
-	mdmPayloadCheckInEndpoint = "/mdm/checkin"
+	// mdmPayloadDescription     = "Enrolls with the Hakinet MDM server"
+	// mdmPayloadServerEndpoint  = "/mdm/connect"
+	// mdmPayloadCheckInEndpoint = "/mdm/checkin"
 
 	scepPayloadDescription = "Configures SCEP"
 	scepPayloadDisplayName = "Hakinet SCEP"
@@ -376,49 +376,49 @@ func (svc *service) makeHakinetSupervisionProfile() (*cfgprofiles.Profile, error
 	profile.AddPayload(appAccess)
 
 	// 4. Web content filter payload
-	webFilter := &WebContentFilterPayload{
-		Payload:                            cfgprofiles.NewPayload("com.apple.webcontent-filter", "com.hakinet.content-filter"),
-		FilterDataProviderBundleIdentifier: "com.hakinet.hakinetKid",
-		FilterDataProviderTeamIdentifier:   "Q5W63Y38NW",
-		UseContentFilter:                   true,
-		FilterType:                         "Plugin",
-		PluginBundleID:                     "com.hakinet.hakinetKid",
-		UserDefinedName:                    "Hakinet Kids Filter",
-		FilterBrowsers:                     true,
-		FilterSockets:                      true,
-	}
-	webFilter.PayloadDisplayName = "Web Filter"
-	profile.AddPayload(webFilter)
+	// webFilter := &WebContentFilterPayload{
+	// 	Payload:                            cfgprofiles.NewPayload("com.apple.webcontent-filter", "com.hakinet.content-filter"),
+	// 	FilterDataProviderBundleIdentifier: "com.hakinet.hakinetKid",
+	// 	FilterDataProviderTeamIdentifier:   "Q5W63Y38NW",
+	// 	UseContentFilter:                   true,
+	// 	FilterType:                         "Plugin",
+	// 	PluginBundleID:                     "com.hakinet.hakinetKid",
+	// 	UserDefinedName:                    "Hakinet Kids Filter",
+	// 	FilterBrowsers:                     true,
+	// 	FilterSockets:                      true,
+	// }
+	// webFilter.PayloadDisplayName = "Web Filter"
+	// profile.AddPayload(webFilter)
 
 	// 5. VPN payload
-	vpnPayload := &VPNManagedPayload{
-		Payload:                      cfgprofiles.NewPayload("com.apple.vpn.managed", "com.hakinet.vpn.config"),
-		UserDefinedName:              "Hakinet Protection",
-		VPNType:                      "VPN",
-		VPNSubType:                   "com.hakinet.hakinetKid",
-		ProviderBundleIdentifier:     "com.hakinet.hakinetKid",
-		ProviderType:                 "packet-tunnel",
-		OnDemandEnabled:              1,
-		OnDemandUserOverrideDisabled: 1,
-		ProhibitDisablement:          true,
-		OnDemandRules: []map[string]string{
-			{"Action": "Connect"},
-		},
-		VPN: map[string]string{
-			"RemoteAddress":        "127.0.0.1:8888",
-			"AuthenticationMethod": "Password",
-		},
-		VendorConfig: map[string]interface{}{
-			"proxyAddress": "127.0.0.1",
-			"proxyPort":    8888,
-		},
-		IPv4: map[string]int{
-			"OverridePrimary": 1,
-		},
-		IncludeAllNetworks: 1,
-	}
-	vpnPayload.PayloadDisplayName = "Hakinet VPN"
-	profile.AddPayload(vpnPayload)
+	// vpnPayload := &VPNManagedPayload{
+	// 	Payload:                      cfgprofiles.NewPayload("com.apple.vpn.managed", "com.hakinet.vpn.config"),
+	// 	UserDefinedName:              "Hakinet Protection",
+	// 	VPNType:                      "VPN",
+	// 	VPNSubType:                   "com.hakinet.hakinetKid",
+	// 	ProviderBundleIdentifier:     "com.hakinet.hakinetKid",
+	// 	ProviderType:                 "packet-tunnel",
+	// 	OnDemandEnabled:              1,
+	// 	OnDemandUserOverrideDisabled: 1,
+	// 	ProhibitDisablement:          true,
+	// 	OnDemandRules: []map[string]string{
+	// 		{"Action": "Connect"},
+	// 	},
+	// 	VPN: map[string]string{
+	// 		"RemoteAddress":        "127.0.0.1:8888",
+	// 		"AuthenticationMethod": "Password",
+	// 	},
+	// 	VendorConfig: map[string]interface{}{
+	// 		"proxyAddress": "127.0.0.1",
+	// 		"proxyPort":    8888,
+	// 	},
+	// 	IPv4: map[string]int{
+	// 		"OverridePrimary": 1,
+	// 	},
+	// 	IncludeAllNetworks: 1,
+	// }
+	// vpnPayload.PayloadDisplayName = "Hakinet VPN"
+	// profile.AddPayload(vpnPayload)
 
 	// 6. Add MDM payload to profile
 	profile.AddPayload(mdmPayload)
