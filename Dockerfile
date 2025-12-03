@@ -1,41 +1,14 @@
-# FROM golang:alpine as builder
+FROM golang:alpine as builder
 
-# RUN apk add --no-cache make git
-
-# WORKDIR /go/src/github.com/micromdm/micromdm/
-
-# COPY . .
-
-# ENV CGO_ENABLED=0 \
-# 	GOARCH=amd64 \
-# 	GOOS=linux
-
-# RUN make deps
-# RUN make
-FROM golang:1.20 as builder
+RUN apk add --no-cache make git
 
 WORKDIR /go/src/github.com/micromdm/micromdm/
 
-ARG TARGETARCH
-ARG TARGETOS
+COPY . .
 
 ENV CGO_ENABLED=0 \
-	GOARCH=$TARGETARCH \
-	GOOS=$TARGETOS
-
-COPY . .
+	GOARCH=amd64 \
+	GOOS=linux
 
 RUN make deps
 RUN make
-
-
-FROM alpine:latest
-
-RUN apk --update add ca-certificates
-
-COPY --from=builder /go/src/github.com/micromdm/micromdm/build/linux/micromdm /usr/bin/
-COPY --from=builder /go/src/github.com/micromdm/micromdm/build/linux/mdmctl /usr/bin/
-
-EXPOSE 80 443
-VOLUME ["/var/db/micromdm"]
-CMD ["micromdm", "serve"]
