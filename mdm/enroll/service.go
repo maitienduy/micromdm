@@ -23,16 +23,16 @@ const (
 	EnrollmentProfileId string = "com.github.micromdm.micromdm.enroll"
 	OTAProfileId        string = "com.github.micromdm.micromdm.ota"
 
-	profilePayloadOrganization = "MicroMDM"
-	profilePayloadDisplayName  = "Enrollment Profile"
+	profilePayloadOrganization = "Hakinet"
+	profilePayloadDisplayName  = "Hakinet Enrollment Profile"
 	profilePayloadDescription  = "The server may alter your settings"
 
-	mdmPayloadDescription     = "Enrolls with the MDM server"
+	mdmPayloadDescription     = "Enrolls with the Hakinet MDM server"
 	mdmPayloadServerEndpoint  = "/mdm/connect"
 	mdmPayloadCheckInEndpoint = "/mdm/checkin"
 
 	scepPayloadDescription = "Configures SCEP"
-	scepPayloadDisplayName = "SCEP"
+	scepPayloadDisplayName = "Hakinet SCEP"
 )
 
 type Service interface {
@@ -55,7 +55,7 @@ func NewService(topic TopicProvider, sub pubsub.Subscriber, scepURL, scepChallen
 	}
 
 	if scepSubject == "" {
-		scepSubject = "/O=MicroMDM/CN=MicroMDM Identity (%ComputerName%)"
+		scepSubject = "/O=Hakinet/CN=Hakinet Identity "
 	}
 
 	subjectElements := strings.Split(scepSubject, "/")
@@ -268,6 +268,48 @@ type ProfileServicePayload struct {
 	PayloadContent ProfileServicePayloadContent
 }
 
+type ApplicationAccessPayload struct {
+	*cfgprofiles.Payload
+	AllowVPNCreation                        bool `plist:"allowVPNCreation,omitempty"`
+	ForceWiFiPowerOn                        bool `plist:"forceWiFiPowerOn,omitempty"`
+	ForceAutomaticDateAndTime               bool `plist:"forceAutomaticDateAndTime,omitempty"`
+	AllowEraseContentAndSettings            bool `plist:"allowEraseContentAndSettings,omitempty"`
+	AllowConfigurationProfileInstallation   bool `plist:"allowConfigurationProfileInstallation,omitempty"`
+	ForceAssistantProfanityFilter           bool `plist:"forceAssistantProfanityFilter,omitempty"`
+	AllowMDMEnrollment                      bool `plist:"allowMDMEnrollment,omitempty"`
+	AllowEnterpriseAppTrust                 bool `plist:"allowEnterpriseAppTrust,omitempty"`
+	AllowUIConfigurationProfileInstallation bool `plist:"allowUIConfigurationProfileInstallation,omitempty"`
+}
+
+type WebContentFilterPayload struct {
+	*cfgprofiles.Payload
+	FilterDataProviderBundleIdentifier string `plist:"FilterDataProviderBundleIdentifier,omitempty"`
+	FilterDataProviderTeamIdentifier   string `plist:"FilterDataProviderTeamIdentifier,omitempty"`
+	UseContentFilter                   bool   `plist:"useContentFilter,omitempty"`
+	FilterType                         string `plist:"FilterType,omitempty"`
+	PluginBundleID                     string `plist:"PluginBundleID,omitempty"`
+	UserDefinedName                    string `plist:"UserDefinedName,omitempty"`
+	FilterBrowsers                     bool   `plist:"FilterBrowsers,omitempty"`
+	FilterSockets                      bool   `plist:"FilterSockets,omitempty"`
+}
+
+type VPNManagedPayload struct {
+	*cfgprofiles.Payload
+	UserDefinedName              string                 `plist:"UserDefinedName,omitempty"`
+	VPNType                      string                 `plist:"VPNType,omitempty"`
+	VPNSubType                   string                 `plist:"VPNSubType,omitempty"`
+	ProviderBundleIdentifier     string                 `plist:"ProviderBundleIdentifier,omitempty"`
+	ProviderType                 string                 `plist:"ProviderType,omitempty"`
+	OnDemandEnabled              int                    `plist:"OnDemandEnabled,omitempty"`
+	OnDemandUserOverrideDisabled int                    `plist:"OnDemandUserOverrideDisabled,omitempty"`
+	ProhibitDisablement          bool                   `plist:"ProhibitDisablement,omitempty"`
+	OnDemandRules                []map[string]string    `plist:"OnDemandRules,omitempty"`
+	VPN                          map[string]string      `plist:"VPN,omitempty"`
+	VendorConfig                 map[string]interface{} `plist:"VendorConfig,omitempty"`
+	IPv4                         map[string]int         `plist:"IPv4,omitempty"`
+	IncludeAllNetworks           int                    `plist:"IncludeAllNetworks,omitempty"`
+}
+
 func (svc *service) MakeOTAEnrollPayload() (*ProfileServicePayload, error) {
 	payload := &ProfileServicePayload{
 		Payload: cfgprofiles.NewPayload("Profile Service", OTAProfileId),
@@ -327,6 +369,134 @@ func (svc *service) MakeOTAPhase2Profile() (*cfgprofiles.Profile, error) {
 // enrollment process. In our case this would probably be a device-specifc
 // MDM enrollment payload.
 // TODO: Not implemented.
+// func (svc *service) OTAPhase3(ctx context.Context) (profile.Mobileconfig, error) {
+// 	return profile.Mobileconfig{}, nil
+// }
+
 func (svc *service) OTAPhase3(ctx context.Context) (profile.Mobileconfig, error) {
-	return profile.Mobileconfig{}, nil
+	// Create a new profile
+	profile := cfgprofiles.NewProfile("com.hakinet.supervision")
+	profile.PayloadOrganization = "Hakinet"
+	profile.PayloadDisplayName = "Hakinet Supervision Profile"
+	profile.PayloadDescription = "Hakinet Device Management"
+	profile.PayloadScope = "System"
+
+	// 1. MDM Payload
+	mdmPayload := cfgprofiles.NewMDMPayload("com.hakinet.mdm")
+	mdmPayload.PayloadOrganization = "Hakinet"
+	mdmPayload.PayloadDisplayName = "Hakinet MDM Enrollment"
+	mdmPayload.PayloadDescription = "MDM Enrollment"
+	mdmPayload.ServerURL = "https://mdm-dev.hakinet.com/mdm/connect"
+	mdmPayload.CheckInURL = "https://mdm-dev.hakinet.com/mdm/checkin"
+	mdmPayload.CheckOutWhenRemoved = true
+	mdmPayload.AccessRights = 8191
+	mdmPayload.SignMessage = true
+	mdmPayload.Topic = "com.apple.mgmt.External.6e32707a-30a5-416c-b9cb-aec51e27c859"
+	mdmPayload.ServerCapabilities = []string{perUserConnections, bootstrapToken}
+
+	// 2. SCEP Payload
+	if svc.SCEPURL != "" {
+		scepPayload := cfgprofiles.NewSCEPPayload("com.hakinet.scep")
+		scepPayload.PayloadDisplayName = "Hakinet Identity SCEP"
+		scepPayload.PayloadOrganization = "Hakinet"
+
+		scepPayload.PayloadContent = cfgprofiles.SCEPPayloadContent{
+			URL:       "https://mdm-dev.hakinet.com/scep",
+			Challenge: "micromdm",
+			KeySize:   2048,
+			KeyType:   "RSA",
+			KeyUsage:  int(x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment),
+			Name:      "Device Management Identity Certificate",
+			Subject: [][][]string{
+				{{"O", "Hakinet"}},
+				{{"CN", "Hakinet Organization"}},
+			},
+		}
+		profile.AddPayload(scepPayload)
+		mdmPayload.IdentityCertificateUUID = scepPayload.PayloadUUID
+	}
+
+	// 3. Restrictions payload (application access)
+	appAccess := &ApplicationAccessPayload{
+		Payload:                                 cfgprofiles.NewPayload("com.apple.applicationaccess", "com.hakinet.restrictions"),
+		AllowVPNCreation:                        false,
+		ForceWiFiPowerOn:                        true,
+		ForceAutomaticDateAndTime:               true,
+		AllowEraseContentAndSettings:            false,
+		AllowConfigurationProfileInstallation:   false,
+		ForceAssistantProfanityFilter:           true,
+		AllowMDMEnrollment:                      false,
+		AllowEnterpriseAppTrust:                 false,
+		AllowUIConfigurationProfileInstallation: false,
+	}
+	appAccess.PayloadDisplayName = "Hakinet Restrictions"
+	profile.AddPayload(appAccess)
+
+	// 4. Web content filter payload
+	webFilter := &WebContentFilterPayload{
+		Payload:                            cfgprofiles.NewPayload("com.apple.webcontent-filter", "com.hakinet.content-filter"),
+		FilterDataProviderBundleIdentifier: "com.hakinet.hakinetKid",
+		FilterDataProviderTeamIdentifier:   "Q5W63Y38NW",
+		UseContentFilter:                   true,
+		FilterType:                         "Plugin",
+		PluginBundleID:                     "com.hakinet.hakinetKid",
+		UserDefinedName:                    "Hakinet Kids Filter",
+		FilterBrowsers:                     true,
+		FilterSockets:                      true,
+	}
+	webFilter.PayloadDisplayName = "Web Filter"
+	profile.AddPayload(webFilter)
+
+	// 5. VPN payload
+	vpnPayload := &VPNManagedPayload{
+		Payload:                      cfgprofiles.NewPayload("com.apple.vpn.managed", "com.hakinet.vpn.config"),
+		UserDefinedName:              "Hakinet Protection",
+		VPNType:                      "VPN",
+		VPNSubType:                   "com.hakinet.hakinetKid",
+		ProviderBundleIdentifier:     "com.hakinet.hakinetKid",
+		ProviderType:                 "packet-tunnel",
+		OnDemandEnabled:              1,
+		OnDemandUserOverrideDisabled: 1,
+		ProhibitDisablement:          true,
+		OnDemandRules: []map[string]string{
+			{"Action": "Connect"},
+		},
+		VPN: map[string]string{
+			"RemoteAddress":        "127.0.0.1:8888",
+			"AuthenticationMethod": "Password",
+		},
+		VendorConfig: map[string]interface{}{
+			"proxyAddress": "127.0.0.1",
+			"proxyPort":    8888,
+		},
+		IPv4: map[string]int{
+			"OverridePrimary": 1,
+		},
+
+		IncludeAllNetworks: 1,
+	}
+	vpnPayload.PayloadDisplayName = "Hakinet VPN"
+	profile.AddPayload(vpnPayload)
+
+	// 6. Add MDM payload to profile
+	profile.AddPayload(mdmPayload)
+
+	// 7. Add TLS certificate if available
+	if len(svc.TLSCert) > 0 {
+		tlsPayload := cfgprofiles.NewCertificatePKCS1Payload("com.hakinet.cert.selfsigned")
+		tlsPayload.PayloadDisplayName = "Hakinet Certificate Authority"
+		tlsPayload.PayloadDescription = "Installs the TLS certificate for Hakinet"
+		tlsPayload.PayloadContent = svc.TLSCert
+		profile.AddPayload(tlsPayload)
+	}
+
+	// Encode and return the profile
+	buf := new(bytes.Buffer)
+	enc := plist.NewEncoder(buf)
+	enc.Indent("  ")
+	if err := enc.Encode(profile); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
