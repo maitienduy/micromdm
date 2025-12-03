@@ -416,8 +416,13 @@ func protoToSetting(s *mdmproto.Setting) Setting {
 		pbs := s.GetBluetooth()
 		setting.Enabled = nilIfFalse(pbs.GetEnabled())
 	case "ApplicationAttributes":
+
 		pbs := s.GetApplicationAttributes()
 		attr := pbs.GetApplicationAttributes()
+		// 		vpnUUID := attr.GetVpnUuid()
+		// if vpnUUID != "" {
+		// 	setting.Attributes = map[string]string{"VPNUUID": vpnUUID}
+		// }
 		setting.Identifier = nilIfEmptyString(pbs.GetIdentifier())
 		if attr != nil {
 			removable := attr.GetRemovable()
